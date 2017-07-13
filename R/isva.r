@@ -6,10 +6,9 @@
 ## require(fastICA)
 
 isva <- function(data.m,mod,pvthCF=0.01,th=0.05,ncomp=NULL,
-                   verbose=F){
-
+                   verbose=F, icamethod=c("JADE","fastICA")){
     stopifnot(is.matrix(data.m))
-    isva.o <- isvaFn(data.m,mod,ncomp,verbose=verbose);
+    isva.o <- isvaFn(data.m,mod,ncomp,verbose=verbose,icamethod);
     selisv.idx <- 1:ncol(isva.o$isv);
     selisv.m <- matrix(isva.o$isv[,selisv.idx],ncol=length(selisv.idx));
     return(list(isv=selisv.m,nsv=length(selisv.idx),selisv=selisv.idx));
@@ -52,7 +51,7 @@ EstDimRMT <- function(data.m,plot=TRUE,verbose=F){
     return(list(cor=C,dim=intdim,estdens=estdens.o,thdens=thdens.o,evals=eigen.o$values));
 }
 
-isvaFn <- function(data.m,mod,ncomp=NULL,verbose=F){
+isvaFn <- function(data.m,mod,ncomp=NULL,icamethod=icamethod,verbose=F){
 ## isvaFn <- function(data.m,pheno.v,ncomp=NULL,verbose=F){
     ##lm.o <- lm(t(data.m) ~ pheno.v);
     ##res.m <- t(lm.o$res)
@@ -72,34 +71,60 @@ isvaFn <- function(data.m,mod,ncomp=NULL,verbose=F){
         msg("no need to estimate dimensionality", verbose=verbose);
     }
 
-    ## perform ICA on residual matrix
-    fICA.o <- fastICA(res.m,n.comp=ncomp);
-    
-    ## now construct ISV
-    tmp.m <- t(fICA.o$A);
-    isv.m <- tmp.m;
-    sd <- 1/sqrt(ncol(data.m)-3);
-    for(k in 1:ncol(tmp.m)){
-        cor.v <- as.vector(cor(t(data.m),tmp.m[, k]))
-        z.v <- 0.5*log((1+cor.v)/(1-cor.v));
-        pv.v <- 2*pnorm(abs(z.v),0,sd,lower.tail=FALSE)
-        tmp.s <- sort(pv.v,decreasing=FALSE,index.return=TRUE);
-        ##qv.o <- qvalue(pv.v);
-        ##nsig <- length(which(qv.o$qvalues<0.05));
-### BEGIN NEW
-        qv.o <- p.adjust(pv.v, "fdr")
-        nsig <- length(which(qv.o < 0.05))
-### END NEW
-        if( nsig < 500 ){
-            nsig <- 500;
-        }
-        red.m <- data.m[tmp.s$ix[1:nsig],];
-        fICA.o <- fastICA(red.m,n.comp=ncomp);
-        cor.v <- abs(cor(tmp.m[,k],t(fICA.o$A)));
-        kmax <- which.max(cor.v);
-        isv.m[,k] <- t(fICA.o$A)[,kmax]; 
-        msg(paste("Built ISV ",k,sep=""), verbose=verbose); 
+  ### perform ICA on residual matrix
+  if(icamethod=="JADE"){
+   ica.o <- JADE(res.m,n.comp=ncomp);
+   tmp.m <- ica.o$A; ### note the different definition of JADE: X=SA^T + error
+   ### now construct ISV
+   isv.m <- tmp.m;
+   sd <- 1/sqrt(ncol(data.m)-3);
+   for(k in 1:ncol(tmp.m)){
+    cor.v <- as.vector(cor(t(data.m),tmp.m[, k]))
+    z.v <- 0.5*log((1+cor.v)/(1-cor.v));
+    pv.v <- 2*pnorm(abs(z.v),0,sd,lower.tail=FALSE)
+    tmp.s <- sort(pv.v,decreasing=FALSE,index.return=TRUE);
+    #qv.o <- qvalue(pv.v);
+    #nsig <- length(which(qv.o$qvalues<0.05));
+    qv.o <- p.adjust(pv.v, "fdr")
+    nsig <- length(which(qv.o < 0.05))
+    if( nsig < 500 ){
+     nsig <- 500;
     }
-    return(list(n.isv=ncomp,isv=isv.m));
-}
+    red.m <- data.m[tmp.s$ix[1:nsig],];
+    ica.o <- JADE(red.m,n.comp=ncomp);
+    cor.v <- abs(cor(tmp.m[,k],ica.o$A));
+    kmax <- which.max(cor.v);
+    isv.m[,k] <- ica.o$A[,kmax];
+    print(paste("Built ISV ",k,sep=""));   
+   }
+  }
+  else {
+   fICA.o <- fastICA(res.m,n.comp=ncomp);
+   tmp.m <- t(fICA.o$A); ### fastICA: X=SA + error
+   ### now construct ISV
+   isv.m <- tmp.m;
+   sd <- 1/sqrt(ncol(data.m)-3);
+   for(k in 1:ncol(tmp.m)){
+    cor.v <- as.vector(cor(t(data.m),tmp.m[, k]))
+    z.v <- 0.5*log((1+cor.v)/(1-cor.v));
+    pv.v <- 2*pnorm(abs(z.v),0,sd,lower.tail=FALSE)
+    tmp.s <- sort(pv.v,decreasing=FALSE,index.return=TRUE);
+    #qv.o <- qvalue(pv.v);
+    #nsig <- length(which(qv.o$qvalues<0.05));
+    qv.o <- p.adjust(pv.v, "fdr")
+    nsig <- length(which(qv.o < 0.05))
+    if( nsig < 500 ){
+     nsig <- 500;
+    }
+    red.m <- data.m[tmp.s$ix[1:nsig],];
+    fICA.o <- fastICA(red.m,n.comp=ncomp);
+    cor.v <- abs(cor(tmp.m[,k],t(fICA.o$A)));
+    kmax <- which.max(cor.v);
+    isv.m[,k] <- t(fICA.o$A)[,kmax];
+    print(paste("Built ISV ",k,sep=""));   
+   }
+  }
 
+  
+  return(list(n.isv=ncomp,isv=isv.m));
+}
