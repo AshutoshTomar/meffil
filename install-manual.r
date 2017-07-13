@@ -13,7 +13,8 @@
                    "parallel",
                    "fastICA",
                    "quadprog",
-                   "betareg"))
+                   "betareg"
+                   "JADE"))
  source("http://bioconductor.org/biocLite.R")
  biocLite(c("illuminaio",
            "limma",
