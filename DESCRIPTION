@@ -29,12 +29,13 @@ Depends: illuminaio,
 	  fastICA,
 	  DNAcopy,
 	  quadprog,
-	  statmod
+	  statmod,
+	  JADE
 Suggests: betareg, 
 	  minfi, 
 	  CopyNumber450kData
 License: Artistic-2.0
-URL: https://github.com/perishky/meffil
+URL: https://github.com/AshutoshTomar/meffil
 LazyData: yes
 biocViews: DNAMethylation, Microarray, TwoChannel, DataImport, Preprocessing,
     QualityControl
