@@ -4,6 +4,7 @@
 
 
 ## require(fastICA)
+require(JADE)
 
 isva <- function(data.m,mod,pvthCF=0.01,th=0.05,ncomp=NULL,
                    verbose=F, icamethod=c("JADE","fastICA")){
