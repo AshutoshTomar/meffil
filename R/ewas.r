@@ -45,6 +45,7 @@ meffil.ewas <- function(beta, variable,
                         most.variable=min(nrow(beta), 50000),
                         featureset=NA,
                         random.seed=20161123,
+                        icamethod=c("JADE","fastICA"), ## TRUE only for isva
                         verbose=F) {
 
     if (isva0 || isva1)
@@ -150,7 +151,7 @@ meffil.ewas <- function(beta, variable,
         if (isva) {
             msg("ISVA.", verbose=verbose)
             set.seed(random.seed)
-            isva.ret <- isva(beta.sva, mod, ncomp=n.sv, verbose=verbose)
+            isva.ret <- isva(beta.sva, mod, ncomp=n.sv, verbose=verbose, icamethod=icamethod)
             if (!is.null(covariates))
                 covariate.sets$isva <- data.frame(covariates, isva.ret$isv, stringsAsFactors=F)
             else
