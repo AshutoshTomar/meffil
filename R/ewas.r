@@ -31,6 +31,7 @@
 #' @param most.variable Apply (Independent) Surrogate Variable Analysis to the 
 #' given most variable CpG sites (Default: 50000).
 #' @param featureset Name from \code{\link{meffil.list.featuresets}()}  (Default: NA).
+#' @param icamethod ISVA method to use for calculating ISVs (Default: JADE).
 #' @param verbose Set to TRUE if status updates to be printed (Default: FALSE).
 #'
 #' @export
