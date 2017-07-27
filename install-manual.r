@@ -22,7 +22,7 @@
            "DNAcopy"))
 
 ## From the command line:
- wget https://github.com/perishky/meffil/archive/master.zip
+ wget https://github.com/AshutoshTomar/meffil/archive/master.zip
  unzip master.zip
  mv meffil-master meffil
  R CMD INSTALL meffil
